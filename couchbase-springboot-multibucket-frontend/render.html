@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <title>Couchbase Example</title>
+</head>
+
+<body>
+    <div class="container">
+        <div class="text-center m-4">
+            <h1>Couchbase Example</h1>
+        </div>
+
+        <div class="input-group flex-nowrap m-4">
+            <span class="input-group-text">Search</span>
+            <input type="text" class="form-control" placeholder="Enter Username" name="keyword" id="keyword"
+                oninput="search(event)">
+        </div>
+
+        <div class="m-3">
+            <button type="button" class="btn btn-primary" onclick="createCustomer()">
+                <i class="bi bi-plus-circle"></i>
+                &nbsp;Create New Customer
+            </button>
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Ho Ten</th>
+                    <th scope="col">Gioi Tinh</th>
+                    <th scope="col">Ngay Sinh</th>
+                    <th scope="col">Dia Chi</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="result">
+                <!-- render data here -->
+                <tr>
+                    <td colspan="5" class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </td>
+                </tr>
+                <!-- end render data -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        listAll();
+
+        function listAll() {
+            fetch('http://localhost:8080/customers')
+                .then(function (response) {
+                    return response.json();
+                })
+                .then((response) => {
+                    renderTableData(response);
+                })
+                .catch(err => console.log('err'));
+        }
+
+        function renderTableData(data) {
+            let result = document.getElementById('result');
+            let htmls = '';
+
+            for (let i = 0; i < data.length; i++) {
+                htmls += `
+                        <tr>
+                            <td>${data[i].id}</td>    
+                            <td>${data[i].name}</td>   
+                            <td>${data[i].gender}</td>   
+                            <td>${data[i].birthday}</td>   
+                            <td>${data[i].address}</td>  
+                            <td>
+                                <button type="button" class="btn btn-primary" onclick="editUser(${data[i].id})">
+                                <i class="bi bi-pencil-square"></i>
+                                Edit
+                                </button>
+                                &nbsp;
+                                <button type="button" class="btn btn-danger" onclick="deleteUser(${data[i].id})">
+                                <i class="bi bi-trash"></i>
+                                Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `
+            }
+            result.innerHTML = htmls;
+        }
+
+        function search(e) {
+            let keyword = document.getElementById('keyword').value;
+
+            fetch('http://localhost:8080/customers/search/' + keyword)
+                .then(function (response) {
+                    return response.json();
+                })
+                .then((response) => {
+                    renderTableData(response);
+                })
+                .catch(err => console.log('err'));
+        }
+
+        function deleteUser(id) {
+            if (confirm(`Ban co muon xoa khach hang id ${id}?`)) {
+                fetch('http://localhost:8080/customers/' + id, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // 'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                })
+                    .then(function (response) {
+                        listAll();
+                    })
+
+            }
+        }
+
+        function editUser(id) {
+            fetch('http://localhost:8080/customers')
+                .then(function (response) {
+                    return response.json();
+                })
+                .then((response) => {
+                    for (let i = 0; i < response.length; i++) {
+                        if (response[i].id == id) {
+                            sessionStorage.setItem('customerEdited', JSON.stringify(response[i]));
+                        }
+                    }
+                })
+                .then(() => {
+                    window.location.href = "update_customer_form.html";
+                })
+                .catch(err => console.log('err'));
+        }
+
+        function createCustomer() {
+            window.location.href = "create_customer_form.html"
+        }
+    </script>
+</body>
+
+</html>
